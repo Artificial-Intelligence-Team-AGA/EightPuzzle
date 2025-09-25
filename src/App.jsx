@@ -118,7 +118,7 @@ export default function EightPuzzle() {
         key={pos + ":" + tile}
         aria-label={isBlank ? "blank" : `tile ${tile}`}
         onClick={() => !isBlank && tryMoveTile(pos)}
-        className={`relative aspect-square w-full select-none rounded-2xl shadow-sm outline-none transition-transform ${
+        className={`relative aspect-square w-full select-none outline-none transition-transform ${
           isBlank ? "bg-gray-100" : canClick ? "hover:scale-[1.02] active:scale-[0.98]" : ""
         }`}
         style={{
@@ -153,7 +153,7 @@ export default function EightPuzzle() {
       <h1 className="mb-2 text-2xl font-semibold">8-Puzzle from Image (A* Solver)</h1>
       <p className="mb-4 text-sm text-gray-600">
         Upload any picture, shuffle to a solvable configuration, click tiles to play, or let the A* solver
-        show the optimal steps.
+        show the optimal steps by utilizing the playback options
       </p>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
