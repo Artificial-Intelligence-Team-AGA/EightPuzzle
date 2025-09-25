@@ -118,20 +118,14 @@ export default function EightPuzzle() {
         key={pos + ":" + tile}
         aria-label={isBlank ? "blank" : `tile ${tile}`}
         onClick={() => !isBlank && tryMoveTile(pos)}
-        className={`relative aspect-square w-full select-none outline-none transition-transform ${
-          isBlank ? "bg-gray-100" : canClick ? "hover:scale-[1.02] active:scale-[0.98]" : ""
-        }`}
+        className={`relative aspect-square w-full select-none outline-none ${!isBlank && canClick ? "hover:opacity-90" : ""}`}
         style={{
           cursor: isBlank ? "default" : canClick ? "pointer" : "default",
           backgroundImage: isBlank || !imageUrl ? undefined : `url(${imageUrl})`,
-          backgroundSize: "300% 300%", // 3x3 grid
+          backgroundSize: "300% 300%",
           backgroundPosition: `${gx * 50}% ${gy * 50}%`,
-          // Fallback color tiles if no image yet
-          backgroundColor: isBlank
-            ? "#f3f4f6"
-            : imageUrl
-            ? undefined
-            : ["#fecaca", "#fde68a", "#bbf7d0", "#bae6fd", "#e9d5ff"][tile % 5],
+          borderRadius: 0,
+          boxShadow: "none",
         }}
         disabled={isBlank}
       >
@@ -187,7 +181,7 @@ export default function EightPuzzle() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,280px)_1fr]">
         {/* Board */}
         <div>
-          <div className="grid aspect-square grid-cols-3 gap-2 rounded-2xl bg-gray-200 p-2">{tiles}</div>
+          <div className="grid aspect-square grid-cols-3 gap-0 rounded-2xl overflow-hidden">{tiles}</div>
         </div>
 
         {/* Controls & Solution playback */}
