@@ -264,3 +264,140 @@ export default function EightPuzzle() {
   );
 }
 
+// ---------------------- A* + helpers ----------------------
+const GOAL = [1, 2, 3, 4, 5, 6, 7, 8, 0];
+
+function arraysEqual(a, b) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+function indexOfValue(arr, val) {
+  for (let i = 0; i < arr.length; i++) if (arr[i] === val) return i;
+  return -1;
+}
+
+function areNeighbors(i, j) {
+  const xi = i % 3,
+    yi = Math.floor(i / 3);
+  const xj = j % 3,
+    yj = Math.floor(j / 3);
+  return Math.abs(xi - xj) + Math.abs(yi - yj) === 1;
+}
+
+function tilesOutOfPlace(board) {
+  let c = 0;
+  for (let i = 0; i < 9; i++) if (board[i] !== 0 && board[i] !== GOAL[i]) c++;
+  return c;
+}
+
+function isSolvable(arr) {
+  // For 3x3, solvable iff inversion count is even
+  const nums = arr.filter((x) => x !== 0);
+  let inv = 0;
+  for (let i = 0; i < nums.length; i++)
+    for (let j = i + 1; j < nums.length; j++) if (nums[i] > nums[j]) inv++;
+  return inv % 2 === 0;
+}
+
+function manhattan(board) {
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    const v = board[i];
+    if (v === 0) continue;
+    const gi = indexOfValue(GOAL, v);
+    const [x1, y1] = [i % 3, Math.floor(i / 3)];
+    const [x2, y2] = [gi % 3, Math.floor(gi / 3)];
+    sum += Math.abs(x1 - x2) + Math.abs(y1 - y2);
+  }
+  return sum;
+}
+
+function neighbors(board) {
+  const blank = board.indexOf(0);
+  const moves = [];
+  const x = blank % 3,
+    y = Math.floor(blank / 3);
+  if (x > 0) moves.push(blank - 1);
+  if (x < 2) moves.push(blank + 1);
+  if (y > 0) moves.push(blank - 3);
+  if (y < 2) moves.push(blank + 3);
+
+  const res = [];
+  for (const m of moves) {
+    const n = board.slice();
+    [n[blank], n[m]] = [n[m], n[blank]];
+    res.push(n);
+  }
+  return res;
+}
+
+function hash(board) {
+  // Compact string key
+  return board.join(",");
+}
+
+function reconstructPath(cameFrom, goalKey, keyToBoard) {
+  const path = [];
+  let k = goalKey;
+  while (k !== undefined) {
+    const b = keyToBoard.get(k);
+    if (!b) break;
+    path.push(b);
+    k = cameFrom.get(k);
+  }
+  return path.reverse();
+}
+
+function aStar(start, goal) {
+  if (!isSolvable(start)) throw new Error("Unsolvable start state");
+
+  const startKey = hash(start);
+  const goalKey = hash(goal);
+
+  const open = new MinHeap((a, b) => a[1] - b[1]); // compare by f = g + h
+  const gScore = new Map();
+  const fScore = new Map();
+  const cameFrom = new Map();
+  const keyToBoard = new Map();
+
+  gScore.set(startKey, 0);
+  const startF = manhattan(start);
+  fScore.set(startKey, startF);
+  keyToBoard.set(startKey, start);
+  open.push([startKey, startF]);
+
+  const visited = new Set();
+
+  while (!open.isEmpty()) {
+    const popped = open.pop();
+    if (!popped) break;
+    const [currentKey] = popped; // node with smallest f
+    if (currentKey === goalKey) {
+      return reconstructPath(cameFrom, currentKey, keyToBoard);
+    }
+    if (visited.has(currentKey)) continue;
+    visited.add(currentKey);
+
+    const current = keyToBoard.get(currentKey);
+    if (!current) continue;
+    const g = gScore.get(currentKey);
+
+    for (const nb of neighbors(current)) {
+      const nbKey = hash(nb);
+      const tentativeG = (g ?? Infinity) + 1; // cost for each move = 1
+
+      if (tentativeG < (gScore.get(nbKey) ?? Infinity)) {
+        cameFrom.set(nbKey, currentKey);
+        gScore.set(nbKey, tentativeG);
+        const f = tentativeG + manhattan(nb);
+        fScore.set(nbKey, f);
+        keyToBoard.set(nbKey, nb);
+        open.push([nbKey, f]);
+      }
+    }
+  }
+
+  throw new Error("No path found");
+}
